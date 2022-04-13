@@ -51,6 +51,56 @@ namespace ExampleRedis
                 Console.WriteLine(item);
             }
 
+            //PUB/SUB
+
+            var sub1 = db.Multiplexer.GetSubscriber();
+            var sub2 = db.Multiplexer.GetSubscriber();
+
+            //first subscribe, until we publish
+            //subscribe to a test message
+            await sub1.SubscribeAsync("test", (channel, message) => {
+                Console.WriteLine("Sub1 Got notification: " + (string)message);
+            });
+
+            await sub2.SubscribeAsync("test", (channel, message) => {
+                Console.WriteLine("Sub2 Got notification: " + (string)message);
+            });
+
+            //criando um publish
+            var publish = db.Multiplexer.GetSubscriber();
+            
+            //publicando no canal de teste a mensagem
+            var count = await publish.PublishAsync("test", "Hello there I am a test message");
+            Console.WriteLine($"Number of listeners for test {count}");
+
+
+
+            //padrão bate com a canal, tudo que começa com a A termina com C
+            await sub1.SubscribeAsync(new RedisChannel("a*c", RedisChannel.PatternMode.Pattern), (channel, message) => {
+                Console.WriteLine($"Sub1 Got pattern a*c notification: {message}");
+            });
+            
+            await sub2.SubscribeAsync(new RedisChannel("a*c", RedisChannel.PatternMode.Pattern), (channel, message) => {
+                Console.WriteLine($"Sub2 Got pattern a*c notification: {message}");
+            });
+
+            count = await publish.PublishAsync("a*c", "Hello there I am a a*c message");
+            Console.WriteLine($"Number of listeners for a*c {count}");
+
+            await publish.PublishAsync("abc", "Hello there I am a abc message");
+            await publish.PublishAsync("a1234567890c", "Hello there I am a a1234567890c message");
+            await publish.PublishAsync("ab", "Hello I am a lost message"); //essa mensagem nunca será enviada
+
+            
+            //correspondencia automatica com padrões, tudo que começa com as letras primeiras letras iguais
+            await sub1.SubscribeAsync(new RedisChannel("zyx*", RedisChannel.PatternMode.Auto), (channel, message) => {
+                Console.WriteLine($"Sub1 Got Literal pattern zyx* notification: {message}");
+            });
+
+            await publish.PublishAsync("zyxabc", "Hello there I am a zyxabc message");
+            await publish.PublishAsync("zyx1234", "Hello there I am a zyxabc message");
+
+
             Console.ReadKey();
         }
     }
