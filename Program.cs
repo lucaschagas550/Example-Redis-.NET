@@ -4,7 +4,7 @@ namespace ExampleRedis
 {
     public class Program
     {
-        static readonly ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost:6379,allowAdmin=true");
+        static readonly ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("192.168.56.101:6379,allowAdmin=true");
         // new ConfigurationOptions{
         //     EndPoints = {"localhost:6379,allowAdmin=true"}                
         // });
@@ -17,7 +17,7 @@ namespace ExampleRedis
 
             //Recuperando todas as keys
             List<string> listKeys = new List<string>();
-            var keys = redis.GetServer("localhost", 6379).Keys();
+            var keys = redis.GetServer("192.168.56.101", 6379).Keys();
             listKeys.AddRange(keys.Select(key => (string)key).ToList());
 
             foreach (var key in listKeys)
